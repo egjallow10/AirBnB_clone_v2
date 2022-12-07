@@ -113,7 +113,7 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, line):
+    def do_create(self, **line):
         """Creates a new instance of BaseModel, saves it
         Usage:
             1) create <Class name>
