@@ -52,9 +52,11 @@ class FileStorage:
             pass
 
         def delete(self, obj=None):
-            ''' deletes the object obj from the attribute'''
-            if obj is None:
-                return
-            obj_key = obj.to_dict()['__class__'] + '.' + obj.id
-            if obj_key in self.__objects.keys():
-                del self.__objects[obj_key]
+            """
+            Delete obj from __objects if obj in __objects.
+            """
+            del self.__objects["{}.{}".format(obj.__class__.__name__, obj.id)]
+
+        def close(self):
+            """ Closes file storage """
+            self.reload()
