@@ -73,7 +73,7 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] is '{' and pline[-1] is'}'\
+                    if pline[0] is '{' and pline[-1] is '}'\
                             and type(eval(pline)) is dict:
                         _args = pline
                     else:
@@ -113,18 +113,45 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, args):
-        """ Create an object of any class"""
-        if not args:
+    def do_create(self, line):
+        """Creates a new instance of BaseModel, saves it
+        Usage:
+            1) create <Class name>
+                This will create a class with auto-assigned attributes
+            2) create <Class name> <key name>=<value> <key name>=<value>
+                Can input any number of keys & values, attributes will
+                reflect the key/value pairs provided
+        Exceptions:
+            SyntaxError: No class name has been provided
+            NameError: The class name doesn't exist
+        """
+        try:
+            if not line:
+                raise SyntaxError()
+            args = line.split(" ")
+            obj = eval("{}()".format(args[0]))
+            for kvpair in args[1:]:
+                item = kvpair.split("=")
+                key = item[0]
+                value = item[1]
+                try:
+                    if value[0] == '"':
+                        value = value.strip('"') \
+                            .replace('\\', '') \
+                            .replace('_', ' ')
+                    elif '.' in value:
+                        value = float(value)
+                    else:
+                        value = int(value)
+                    obj.__dict__[key] = value
+                except Exception:
+                    continue
+            obj.save()
+            print("{}".format(obj.id))
+        except SyntaxError:
             print("** class name missing **")
-            return
-        elif args not in HBNBCommand.classes:
+        except NameError:
             print("** class doesn't exist **")
-            return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
-        print(new_instance.id)
-        storage.save()
 
     def help_create(self):
         """ Help information for the create method """
@@ -187,7 +214,7 @@ class HBNBCommand(cmd.Cmd):
         key = c_name + "." + c_id
 
         try:
-            del(storage.all()[key])
+            del (storage.all()[key])
             storage.save()
         except KeyError:
             print("** no instance found **")
@@ -319,6 +346,7 @@ class HBNBCommand(cmd.Cmd):
         """ Help information for the update class """
         print("Updates an object with new information")
         print("Usage: update <className> <id> <attName> <attVal>\n")
+
 
 if __name__ == "__main__":
     HBNBCommand().cmdloop()
