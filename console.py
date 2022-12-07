@@ -113,45 +113,53 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, **line):
-        """Creates a new instance of BaseModel, saves it
-        Usage:
-            1) create <Class name>
-                This will create a class with auto-assigned attributes
-            2) create <Class name> <key name>=<value> <key name>=<value>
-                Can input any number of keys & values, attributes will
-                reflect the key/value pairs provided
-        Exceptions:
-            SyntaxError: No class name has been provided
-            NameError: The class name doesn't exist
-        """
-        try:
-            if not line:
-                raise SyntaxError()
-            args = line.split(" ")
-            obj = eval("{}()".format(args[0]))
-            for kvpair in args[1:]:
-                item = kvpair.split("=")
-                key = item[0]
-                value = item[1]
-                try:
-                    if value[0] == '"':
-                        value = value.strip('"') \
-                            .replace('\\', '') \
-                            .replace('_', ' ')
-                    elif '.' in value:
-                        value = float(value)
-                    else:
-                        value = int(value)
-                    obj.__dict__[key] = value
-                except Exception:
-                    continue
-            obj.save()
-            print("{}".format(obj.id))
-        except SyntaxError:
+    def do_create(self, args):
+        """ Create an object of any class"""
+        # Check if the argument is empty
+        if not args:
             print("** class name missing **")
-        except NameError:
+            return
+        # Split the argument into a list of arguments (on each space)
+        args_list = args.split()
+        class_name = args_list[0]
+
+        # We know that the first item of this argument list should be the class
+        # Check if the class exists
+        if class_name not in HBNBCommand.classes:
             print("** class doesn't exist **")
+            return
+
+        # Create a new instance of the class
+        new_instance = HBNBCommand.classes[class_name]()
+
+        # contains the attribute to set to the class
+        # attribute and values are still separated by the `=` sign
+        attributes = args_list[1:]
+
+        # Go over all attributes and split keys and values from the `=` sign
+        for attribute in attributes:
+            key, value = attribute.split('=')
+            # Handle the formating (string, integer, float, underscore)
+            value = value.replace('_', ' ')
+
+            if value[0] == value[-1] == '"':
+                value = value[1:-1]
+            else:
+                # If value isn't in quotation marks
+                # it might be a numerical value
+                try:
+                    value = int(value)
+                except ValueError:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        pass  # If all fail, then it's a string
+
+            setattr(new_instance, key, value)
+
+        storage.save()
+        print(new_instance.id)
+        storage.save()
 
     def help_create(self):
         """ Help information for the create method """
